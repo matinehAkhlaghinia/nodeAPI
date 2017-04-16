@@ -18,6 +18,7 @@ app.use(function (req, res, next) {
 
 
 
+
 //Setting up server
  // var server = app.listen(process.env.PORT || 8080, function () {
  //    var port = server.address().port;
@@ -38,16 +39,17 @@ var dbConfig = {
     options: {encrypt: true, database: 'nuffield'}
 };
 
+var connection = new sql.Connection(dbConfig);
+connection.connect();
 //Function to connect to database and execute query
 var  executeQuery = function(query, res){
-     sql.connect(dbConfig, function (err) {
-       if (err) {
-           console.log("Error while connecting database :- " + err);
-           return res.send(err);
-        }
-        else {
+       //if (err) {
+           // console.log("Error while connecting database :- " + err);
+           // return res.send(err);
+       // }
+        //else {
            // create Request object
-           var request = new sql.Request();
+           var request = new sql.Request(connection);
            // query to the database
            request.query(query, function (err, result) {
                if (err) {
@@ -56,11 +58,12 @@ var  executeQuery = function(query, res){
                }
                else {
                   console.log(result);
+                  sql.close();
                   res.send(result)
                }
            });
-        }
-    });
+        //}
+
 }
 
 
@@ -93,6 +96,25 @@ app.post('/classAvailable', function (req, res) {
   executeQuery(query, res);
 });
 
+app.post('/login', function (req, res) {
+  var query = "UPDATE user_session SET user_id =" + req.body.user_id + "WHERE user_session=" + req.body.user_session;
+  executeQuery(query, res);
+});
+
+app.post('/addSession', function (req, res) {
+  var query = "INSERT INTO user_session (user_id, user_session) VALUES (NULL," + req.body.user_session + ")";
+  executeQuery(query, res);
+});
+
+app.post('/isLoggedin',function(req, res) {
+  var query = "SELECT * FROM user_session WHERE user_session=" + req.body.user_session;
+  executeQuery(query, res);
+});
+
+app.post('/cancelBooking',function(req, res) {
+  var query = "DELETE FROM booked_classes WHERE class_name=" + req.body.class_name + "AND class_date=" + req.body.class_date;
+  executeQuery(query, res);
+});
 
 //GET API
 // app.get('/classes', function(req , res){
